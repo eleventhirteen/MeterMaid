@@ -9,6 +9,10 @@ import time
 import pymysql
 import utility_meters
 
+#adjustable path variables.
+rtltcppath=""
+ncpath=""
+
 meters              = {}
 electricMeterTypes  = [4, 5, 7, 8]
 gasMeterTypes       = [2, 9, 12]
@@ -55,8 +59,9 @@ while True:
 
     # print(pkt)
 
+    #forking to remove pType from DB entries of Pre forked repo. Commented because this is unneeded.
     # combine pId and pType cast to int
-    pId = pId + pType
+    #pId = pId + pType
 
     # gather data at class defined granularity (5 min seems good)
     # electric; type 4, 5, 7, 8
