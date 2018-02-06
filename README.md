@@ -1,4 +1,4 @@
-# UtilityMon
+# MeterMaid
 
 This is a fork of utility-mon from https://github.com/benvandoren. I modified this code release because I use grafana to graph my power and gas use, so I didnt need the web pieces. I have made some modifications of the original, as the mType was being appended to the end of the mId.
 
