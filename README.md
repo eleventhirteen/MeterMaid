@@ -6,7 +6,7 @@ This is a fork of utility-mon from https://github.com/benvandoren. I modified th
 Most of the hard work goes to benvandoren. Thank you.
 
 # Installation:
-installation requires Python3, 
+installation requires Python3, requests, simplejson,mysql.connector, subprocess, socket, re, time, pymysql.
 
 
 # WeatherDB create table
@@ -129,4 +129,29 @@ Restart=on-abort
 
 [Install]
 WantedBy=multi-user.target```
+
+`vim /etc/systemd/system/weather.service`
+
+
+```
+[Unit]
+Description=weather
+After=network.target
+
+[Service]
+Type=simple
+User=reiners.io
+WorkingDirectory=/home/reiners.io
+ExecStart= 'while true do; python3 /home/reiners.io/bin/weather.py; sleep 900; done'
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target```
+
+`systemctl enable weather.service`
+`systemctl enable UtilityMon.service`
+`systemctl start weather`
+`systemctl start UtilityMon`
+
+
 
