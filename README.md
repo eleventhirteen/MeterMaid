@@ -10,6 +10,7 @@ installation requires Python3,
 
 
 # WeatherDB create table
+
 ```
    CREATE DATABASE weather;
 
@@ -24,7 +25,8 @@ installation requires Python3,
   `text1` varchar(30) DEFAULT NULL,
   `text2` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPRESSED```
+) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPRESSED
+```
 
 # UtilityMeter create table
 
@@ -39,7 +41,8 @@ installation requires Python3,
   `mTotalConsumption` int(11) DEFAULT NULL,
   `mConsumed` float DEFAULT NULL,
   PRIMARY KEY (`mPrimaryKey`)
-) ENGINE=InnoDB AUTO_INCREMENT=135144 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPRESSED```
+) ENGINE=InnoDB AUTO_INCREMENT=135144 DEFAULT CHARSET=latin1 ROW_FORMAT=COMPRESSED
+```
 
 # MySQL grants
 `grant all privileges on weather.Weatherdb identified by 'password';`
