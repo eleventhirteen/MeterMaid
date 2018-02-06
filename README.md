@@ -45,7 +45,9 @@ installation requires Python3,
 ```
 
 # MySQL grants
+
 `grant all privileges on weather.Weatherdb identified by 'password';`
+
 `grant all privileges on UtilityMon.UtilityMeter identified by 'password';`
 
 Make sure you edit database.py with your current mysql credentials you just set up.
