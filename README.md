@@ -59,7 +59,8 @@ Make sure you edit database.py with your current mysql credentials you just set 
 
 Electric Meter:
 
-```SELECT
+```
+SELECT
   mId as metric,
   mTime as time_sec,
   mConsumed as value
@@ -72,7 +73,9 @@ and
 ```
 
 Gas Meter:
-```SELECT
+
+```
+SELECT
   mId as metric,
   mTime as time_sec,
   mConsumed as value
@@ -86,7 +89,8 @@ and
 
 Neighborhood Electric Meters:
 
-```SELECT
+```
+SELECT
   mType,
   mId as metric,
   mTime as time_sec,
@@ -101,7 +105,8 @@ and
 
 Neighborhood Gas Meters:
 
-```SELECT
+```
+SELECT
   mType,
   mId as metric,
   mTime as time_sec,
@@ -111,7 +116,8 @@ WHERE
   mType=12
 and
   $__unixEpochFilter(mTime)
-;```
+;
+```
 
 Weather:
 I'll update this when I get it implemented.
@@ -120,7 +126,9 @@ Use:
 clone somewhere
 
 `vim /etc/systemd/system/UtilityMon.service`
-```[Unit]
+
+```
+[Unit]
 Description=MeterMaid
 After=network.target
 
