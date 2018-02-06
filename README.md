@@ -163,8 +163,11 @@ WantedBy=multi-user.target
 ```
 
 `systemctl enable weather.service`
+
 `systemctl enable UtilityMon.service`
+
 `systemctl start weather`
+
 `systemctl start UtilityMon`
 
 
