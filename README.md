@@ -68,7 +68,8 @@ WHERE
   mId=5744xxxx
 and
   $__unixEpochFilter(mTime)
-;```
+;
+```
 
 Gas Meter:
 ```SELECT
@@ -80,9 +81,11 @@ WHERE
   mId=6592xxxx
 and
   $__unixEpochFilter(mTime)
-;```
+;
+```
 
 Neighborhood Electric Meters:
+
 ```SELECT
   mType,
   mId as metric,
@@ -97,6 +100,7 @@ and
 ```
 
 Neighborhood Gas Meters:
+
 ```SELECT
   mType,
   mId as metric,
@@ -128,7 +132,8 @@ ExecStart=/home/reiners.io/bin/utilitymon.py
 Restart=on-abort
 
 [Install]
-WantedBy=multi-user.target```
+WantedBy=multi-user.target
+```
 
 `vim /etc/systemd/system/weather.service`
 
@@ -146,7 +151,8 @@ ExecStart= 'while true do; python3 /home/reiners.io/bin/weather.py; sleep 900; d
 Restart=on-abort
 
 [Install]
-WantedBy=multi-user.target```
+WantedBy=multi-user.target
+```
 
 `systemctl enable weather.service`
 `systemctl enable UtilityMon.service`
