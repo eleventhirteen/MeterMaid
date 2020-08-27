@@ -136,7 +136,7 @@ class UtilityMeter:
             self.timeDiff = self.newTime - self.oldTime
             
             ##### DEBUG TAKE OUT.
-            if self.meterID in config.myMeters:print(data)
+            #if self.meterID in config.myMeters:print(data)
             
             if(self.timeDiff.total_seconds() < 0):print("Error: Time Diff Negative. Customer: %s. %d - %d = %d" % (self.meterID, self.newTime, self.oldTime, self.timeDiff))
             

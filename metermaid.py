@@ -30,7 +30,6 @@ if config.rtltcp.get("RTL_TCP"):
     time.sleep(15)   
 
 print("Sarting RTLAMR")
-#rtlamr = subprocess.Popen("/code/rtlamr/rtlamr --server=192.168.1.226:1234 --msgtype=scm,r900 --filterid=1461117564,54353667,58921666 --format=json", stdout=subprocess.PIPE, shell=True)
 rtlamr = subprocess.Popen("{} {}".format(config.rtlamr['PATH'],config.rtlamr["FLAGS"]), stdout=subprocess.PIPE, shell=True)
 
 
@@ -40,13 +39,8 @@ while True:
     
     if output:
         data = json.loads(output.decode().strip())
-        #print(data)
-
-        # {'Time': '2020-08-24T19:13:39.00565765-06:00', 'Offset': 0, 'Length': 0, 'Type': 'SCM', 'Message': {'ID': 54539756, 'Type': 12, 'TamperPhy': 1, 'TamperEnc': 0, 'Consumption': 288934, 'ChecksumVal': 36224}}
-        
         try:
             """ where things are processed """
-            
                    
             protocol_type = data.get('Type')
             message_type = data.get('Message').get('Type')
