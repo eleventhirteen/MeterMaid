@@ -9,6 +9,13 @@ import time
 import pymysql
 import utility_meters
 
+try:
+    from config import *
+except ImportError:
+    print("Configuration Data is needed in config.py, please add them there!")
+    raise
+    
+    
 #adjustable path variables.
 rtltcppath=""
 ncpath=""
