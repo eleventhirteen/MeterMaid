@@ -1,7 +1,9 @@
 #!/usr/bin/env python3.4
 import time
 import datetime
+from datetime import timezone
 from dateutil import parser
+from dateutil.tz import UTC
 import config
 
 class UtilityMeter:
@@ -19,89 +21,130 @@ class UtilityMeter:
             
             self.oldConsumption = None
             self.newConsumption = None
-            
+            self.currentConsumption = None
+
             
             
     def electric_meter(self, data):
+        # convert power diff from kwh to kws
+        #self.watts = (self.powerDiff * 3600 /self.timeDiff)
+        """ something.  . ..  electric meter data processor"""
 
-        print(config.meters.get(data.get('Message').get('ID')))
+        dtime = data.get('Time')
+        self.newTime = parser.parse(dtime)
+
+        self.meterID = data.get('Message').get('ID')
+        self.currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         
-        if not data.get('Message').get('ID') in config.meters.keys():
-            config.meters[data.get('Message').get('ID')] = data
+        self.newConsumption = data.get('Message').get('Consumption')
+        
+        self.meter_type = "Electric"
+
+        if not self.meterID in config.meters.keys():
+            if config.debug:print("first time seeing this id: {}".format(self.meterID))
+            config.meters[self.meterID] = {"Time": self.newTime, "ID":self.meterID, "Consumption": self.newConsumption}
             return False
         else:
-            print(config.meters)
+
+            self.oldConsumption = config.meters[self.meterID].get('Consumption')
+            self.oldTime = config.meters[self.meterID].get('Time')
+
+            # level shift.
+            config.meters[self.meterID]['Consumption'] = self.newConsumption
+            config.meters[self.meterID]['Time'] = self.newTime
+
+
+            self.timeDiff = self.newTime - self.oldTime
+
+            ##### DEbUG TAKE OUT.
+            #if self.meterID in config.myMeters:print(data)
+
+            if(self.timeDiff.total_seconds() < 0):print("Error: Time Diff Negative. Customer: %s. %d - %d = %d" % (self.meterID, self.newTime, self.oldTime, self.timeDiff))
+
+            self.wattDiff = self.newConsumption - self.oldConsumption
+
+            #if(self.wattDiff != 0):
+            #if(self.wattDiff):
+            if data.get('Message').get('Consumption'):
+
+                #print(data)
+                self.kwhPerMin = (self.wattDiff / (self.timeDiff.total_seconds() / 60)) / 100 # <-
+
+
+                # if numbers are way out of range throw error
+                if self.meterID in config.myMeters:
+                    print("[%s] Customer %s Using %f kwh per minute. (consumption: %d) - (time elapsed: %d s) ### %d" % (self.currentTime, self.meterID, self.kwhPerMin, self.wattDiff, self.timeDiff.total_seconds(),self.newConsumption))
+                else:
+                    print("[%s] Customer %s Using %f kwh per minute. (consumption: %d) - (time elapsed: %d s)" % (self.currentTime, self.meterID, self.kwhPerMin, self.wattDiff, self.timeDiff.total_seconds()))
+                
+                self.log_data(data,self.wattDiff,self.kwhPerMin,"kwh/min")
+
+            else:
+                # consumption data hasn't changed. time shift back and wait some more.
+                config.meters[self.meterID]['Time'] = self.oldTime
+                config.meters[self.meterID]['Consumption'] = self.oldConsumption #redundant?
+                self.log_data(data,0,0,"kwh/min")
             return True
-            
-        
-    
-        
-        #time
-        self.time = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-        self.watts = 0
-        self.time2   = currTime
-        self.consumption2  = currConsumption
 
-        self.timeDiff = self.time2 - self.time1
-        if(self.timeDiff < 0):
-            print("Error: Time Diff Negative. Customer: %s. %d - %d = %d" % (self.mId, self.time2, self.time1, self.timeDiff))
-        # min 5min granularity
-        if(self.timeDiff >= 300):
-            # figure out the power used in this time
-            self.powerDiff = self.consumption2 - self.consumption1
-            # if the power hasn't incremented then do nothing
-            if(self.powerDiff != 0):
-                # reset time1 and consumption1
-                self.time1 = currTime
-                self.consumption1 = currConsumption
-
-                # convert power diff from kwh to kws
-                self.watts = (self.powerDiff * 3600 /self.timeDiff)
-                # if numbers are way out of range throw error
-                if(self.watts > 10000 or self.watts < -10000):
-                    print("Calculated use out of range! Got:")
-                    print("[%s] Customer %s Using %f watts. %d Wh / %d s" % (self.time, self.mId, self.watts, self.powerDiff, self.timeDiff))
-                    return -1
-                print("[%s] Customer %s Using %f watts. %d Wh / %d s" % (self.time, self.mId, self.watts, self.powerDiff, self.timeDiff))
-
-                # write to db
-                self.dbCur.execute("insert into UtilityMeter(mId, mType, mTime, mTotalConsumption, mConsumed) values (%s, %d, %d, %d, %f)" % (self.mId, int(self.mType), int(currTime), int(currConsumption), self.watts))
-
-        return self.watts
-
-    # cubic feet / sec ??
     def gas_meter(self, data):
-        #time
-        self.time = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-        self.gasPerSec = 0
-        self.time2  = currTime
-        self.consumption2   = currConsumption
+        """ something.  . ..  gas meter data processor"""
 
-        self.timeDiff = self.time2 - self.time1
-        if(self.timeDiff < 0):
-            print("Error: Time Diff Negative. Customer: %s. %d - %d = %d" % (self.mId, self.time2, self.time1, self.timeDiff))
-        # min 5min granularity
-        if(self.timeDiff >= 300):
-            # calculate gas / sec
-            self.gasDiff = self.consumption2 - self.consumption1
-            # if it hasn't changed do nothing
-            if(self.gasDiff != 0):
-                # reset time1 and consumption1
-                self.time1 = currTime
-                self.consumption1 = currConsumption
+        dtime = data.get('Time')
 
-                self.gasPerSec = self.gasDiff / self.timeDiff
+        self.newTime = parser.parse(dtime)
+        self.meterID = data.get('Message').get('ID')
+        self.currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+
+        self.newConsumption = data.get('Message').get('Consumption')
+        
+        self.meter_type = "Gas"
+
+        if not self.meterID in config.meters.keys():
+            if config.debug:print("first time seeing this id: {}".format(self.meterID))
+            config.meters[self.meterID] = {"Time": self.newTime, "ID":self.meterID, "Consumption": self.newConsumption}
+            return False
+        else:
+
+            self.oldConsumption = config.meters[self.meterID].get('Consumption')
+            self.oldTime = config.meters[self.meterID].get('Time')
+
+            # level shift.
+            config.meters[self.meterID]['Consumption'] = self.newConsumption
+            config.meters[self.meterID]['Time'] = self.newTime
+
+
+            self.timeDiff = self.newTime - self.oldTime
+
+            ##### DEbUG TAKE OUT.
+            #if self.meterID in config.myMeters:print(data)
+
+            if(self.timeDiff.total_seconds() < 0):print("Error: Time Diff Negative. Customer: %s. %d - %d = %d" % (self.meterID, self.newTime, self.oldTime, self.timeDiff))
+
+            self.mcfDiff = self.newConsumption - self.oldConsumption
+
+            #if(self.wattDiff != 0):
+            #if(self.mcfDiff):
+            
+            if data.get('Message').get('Consumption'):
+                #print(data)
+                self.mcfPerMin = (self.mcfDiff / (self.timeDiff.total_seconds() / 60)) / 1000 # <-
+
                 # if numbers are way out of range throw error
-                if(self.gasPerSec > 10000 or self.gasPerSec < -10000):
-                    print("Calculated use out of range! Got:")
-                    print("[%s] Customer %s Using %f cubic feet / sec. %d / %d s" % (self.time, self.mId, self.gasPerSec, self.gasDiff, self.timeDiff))
-                    return -1
-                print("[%s] Customer %s Using %f cubic feet / sec. %d / %d s" % (self.time, self.mId, self.gasPerSec, self.gasDiff, self.timeDiff))
+                if self.meterID in config.myMeters:
+                    print("[%s] Customer %s Using %f mcf per minute. (consumption: %d) - (time elapsed: %d s) ### %d" % (self.currentTime, self.meterID, self.mcfPerMin, self.mcfDiff, self.timeDiff.total_seconds(),self.newConsumption))
+                else:
+                    print("[%s] Customer %s Using %f mcf per minute. (consumption: %d) - (time elapsed: %d s)" % (self.currentTime, self.meterID, self.mcfPerMin, self.mcfDiff, self.timeDiff.total_seconds()))
 
-                # write to db
-                self.dbCur.execute("insert into UtilityMeter(mId, mType, mTime, mTotalConsumption, mConsumed) values (%s, %d, %d, %d, %f)" % (int(self.mId), int(self.mType), int(currTime), int(currConsumption), self.gasPerSec))
+                self.log_data(data,self.mcfDiff,self.mcfPerMin,"mcf/min")
+                
+            else:
+                # consumption data hasn't changed. time shift back and wait some more.
+                config.meters[self.meterID]['Time'] = self.oldTime
+                config.meters[self.meterID]['Consumption'] = self.oldConsumption #redundant?
+                
+                self.log_data(data,0,0,"mcf/min")
 
-        return self.gasPerSec
+            return True
 
 
     def water_meter(self, data):
@@ -110,7 +153,13 @@ class UtilityMeter:
         dtime = data.get('Time')
         
         self.newTime = parser.parse(dtime)
+        
         self.meterID = data.get('Message').get('ID') 
+        self.currentTime = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+        
+        self.currentConsumption = data.get('Message').get('Consumption')
+        
+        self.meter_type = "Water"
         
         if "900" in data.get("Type"):
             #Neptune R900 meters. Cu3/GPM 1/10
@@ -134,28 +183,67 @@ class UtilityMeter:
             
 
             self.timeDiff = self.newTime - self.oldTime
-            
-            ##### DEBUG TAKE OUT.
+                        
+            ##### DEbUG TAKE OUT.
             #if self.meterID in config.myMeters:print(data)
             
             if(self.timeDiff.total_seconds() < 0):print("Error: Time Diff Negative. Customer: %s. %d - %d = %d" % (self.meterID, self.newTime, self.oldTime, self.timeDiff))
             
-            self.waterDiff = self.newConsumption - self.oldConsumption
-
+            self.waterDiff = (self.newConsumption - self.oldConsumption) 
+            
             if(self.waterDiff != 0):
+            # water meter only updates a static export every 7-15 minutes and repeats ~30. ignore unless something changed.
+                if "900" in data.get("Type"):
+                #Neptune R900 meters. Cu3/GPM 1/10
+                    self.waterPerMin = self.waterDiff / (self.timeDiff.total_seconds() / 60) 
+
+                else:
+                    #Assuming others are 1:1
+                    self.waterPerMin = self.waterDiff / (self.timeDiff.total_seconds() / 60)
+
                 
-                self.waterPerMin = self.waterDiff / (self.timeDiff.total_seconds() / 60)
-                
-                # if numbers are way out of range throw error
+                ### disply whats new and write to database.
                 if self.meterID in config.myMeters:
-                    print("[%s] Customer %s Using %f gallons per min. (consumption: %d) - (time elapsed: %d s) ###" % (self.currentTime, self.meterID, self.waterPerMin, self.waterDiff, self.timeDiff.total_seconds()))
+                    print("[%s] Customer %s Using %f gallons per min. (consumption: %d) - (time elapsed: %d s) ### %d" % (self.currentTime, self.meterID, self.waterPerMin, self.waterDiff, self.timeDiff.total_seconds(),self.currentConsumption))
                 else:
                     print("[%s] Customer %s Using %f gallons per min. (consumption: %d) - (time elapsed: %d s)" % (self.currentTime, self.meterID, self.waterPerMin, self.waterDiff, self.timeDiff.total_seconds()))
+                
+                self.log_data(data,self.waterDiff,self.waterPerMin,"gallons/min")
+
                     
             else:
                 # consumption data hasn't changed. time shift back and wait some more.
                 config.meters[self.meterID]['Time'] = self.oldTime
                 config.meters[self.meterID]['Consumption'] = self.oldConsumption #redundant?
                 
+                # log no change to db for graph. test.
+                self.log_data(data,0,0,"gallons/min")
+                
             return True
-            
+
+    def log_data(self, data, diff=None, usage=None, measurement=None):
+
+        sql = """
+                INSERT INTO Utilities
+                VALUES(0, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+        protocol = data.get('Type')
+        message_type = data.get('Message').get('Type')
+        consumption =  data.get('Message').get('Consumption')
+        
+        #print(self.newTime,self.meterID,protocol,message_type,self.meter_type,usage,measurement,consumption,diff,None)
+        
+        self._database.insert_db(sql,(
+                            self.newTime,
+                            self.meterID,
+                            protocol,
+                            message_type,
+                            self.meter_type,
+                            usage,
+                            measurement,
+                            consumption,
+                            diff,
+                            None
+                            ))
+        
+

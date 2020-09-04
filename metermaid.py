@@ -29,7 +29,12 @@ if config.rtltcp.get("RTL_TCP"):
     if config.debug:print("sleeping 15 seconds")
     time.sleep(15)   
 
-print("Sarting RTLAMR")
+# this feels gross but works. probably a more pythonic way to do this.
+if config.myMetersOnly:
+    config.rtlamr["FLAGS"] += " " + " --filterid={}".format(config.myMeters).replace('[','').replace(']','').replace(' ','')
+    
+print("Sarting RTLAMR ({} {})".format(config.rtlamr['PATH'],config.rtlamr["FLAGS"]))
+    
 rtlamr = subprocess.Popen("{} {}".format(config.rtlamr['PATH'],config.rtlamr["FLAGS"]), stdout=subprocess.PIPE, shell=True)
 
 
@@ -46,17 +51,19 @@ while True:
             message_type = data.get('Message').get('Type')
             meter_type = None
             
-            if 'SCM' in protocol_type and message_type in config.scm_electric: meter_type = "Electric"
-            elif 'SCM' in protocol_type and message_type in config.scm_water: meter_type = "Water"
-            elif 'SCM' in protocol_type and message_type in config.scm_gas: meter_type = "Gas"
+            if 'SCM' in protocol_type and message_type in config.scm_electric: 
+                meter_type = "Electric"
+                utility.electric_meter(data)
+            elif 'SCM' in protocol_type and message_type in config.scm_water: 
+                meter_type = "Water"
+                utility.water_meter(data)
+            elif 'SCM' in protocol_type and message_type in config.scm_gas: 
+                meter_type = "Gas"
+                utility.gas_meter(data)
             elif 'R900' in protocol_type: 
-                meter_type = "water" # all I have are r900 water to test against. 
-                #print(protocol_type,message_type,meter_type)
+                meter_type = "Water" # neptune
                 utility.water_meter(data)
                 
-                        
-        
-        
         except:
              logging.debug(traceback.print_exc(file=sys.stdout))
         
